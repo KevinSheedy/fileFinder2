@@ -1,1 +1,1 @@
-INSERT INTO filepath VALUES (?)
+INSERT INTO filepath VALUES (?,?,?)

@@ -82,14 +82,14 @@ def select_filenames(conn, filenames):
 	query = '''SELECT rowid, filename
 				FROM filename
 				WHERE filename IN ('''+str_filenames+''')'''
-	print query
+	#print query
 	return cursor.execute(query).fetchall()
 	
 def select_filenames_as_dict(conn, filenames):
 	dict = {}
 	for row in select_filenames(conn, filenames):
 		print row
-		dict[row[0]] = row[1]
+		dict[row[1]] = row[0]
 	
 	return dict
 	
@@ -103,7 +103,7 @@ def select_all_filenames(conn):
 def select_all_filenames_as_dict(conn):
 	dict = {}
 	for row in select_all_filenames(conn):
-		dict[row[0]] = row[1]
+		dict[row[1]] = row[0]
 	
 	return dict
 	
@@ -136,11 +136,10 @@ def append_filenames(conn, filenames):
 def select_filepaths(conn, filepaths):
 	cursor = conn.cursor()
 	str_filepaths = obj_to_query_string(filepaths)
-	query = '''SELECT rowid, filepath
+	query = '''SELECT path_key, filename_id, is_file, rowid
 				FROM filepath
-				WHERE filepath IN ('''+str_filepaths+''')'''
+				WHERE path_key IN ('''+str_filepaths+''')'''
 				
-	print query
 	return cursor.execute(query).fetchall()
 	
 def select_filepaths_as_dict(conn, filepaths):
@@ -152,27 +151,37 @@ def select_filepaths_as_dict(conn, filepaths):
 
 def select_all_filepaths(conn):
 	cursor = conn.cursor()
-	query = '''SELECT rowid, filepath
+	query = '''SELECT path_key, filename_id, is_file, rowid
 				FROM filepath'''
 	return cursor.execute(query).fetchall()
 	
-def insert_filepath(conn, filepath):
+def insert_filepath(conn, path_key, filename_id=None, is_file=False):
 	cursor = conn.cursor()
-	insert(conn, "insert_filepath", [filepath])
-	#cursor.execute("INSERT into filepath values('" + filepath + "')")
+	insert(conn, "insert_filepath", (path_key, filename_id, is_file))
 
-def insert_filepaths(conn, filepaths):
-	list_of_lists = []
-	for filepath in filepaths:
-		list_of_lists.append([filepath])
-		
-	insert_multiple(conn, "insert_filepath", list_of_lists)
+def insert_filepaths(conn, filepath_rows):
+	insert_multiple(conn, "insert_filepath", filepath_rows)
 	conn.commit()
 	
-def append_filepaths(conn, filepaths):
-	s = set(filepaths)
-	rows = select_filepaths(conn, filepaths)
-	for row in rows:
-		s.remove(row[1])
+def append_filepaths(conn, filepath_rows):
 	
-	insert_filepaths(conn, s)
+	# Get list of paths to be inserted
+	new_path_keys = set()
+	for row in filepath_rows:
+		path_key = row[0]
+		new_path_keys.add(path_key)
+
+	# Get the paths that already exist in the DB
+	existing_path_keys = set()
+	existing_rows = select_filepaths(conn, new_path_keys)
+	for row in existing_rows:
+		existing_path_keys.add(row[0])
+	
+	# Determine the rows to insert
+	rows_to_append = []
+	
+	for row in filepath_rows:
+		if not row[0] in existing_path_keys:
+			rows_to_append.append(row)
+	
+	insert_filepaths(conn, rows_to_append)
