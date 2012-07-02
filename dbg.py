@@ -36,5 +36,11 @@ list.append(("asdf_qer_asdfasdfasdf", 45678, True))
 #	print row
 
 
-dbg = os.walk("C:/dev/html/")
-print dbg
+#walk_generator = os.walk("C:/dev/html/")
+
+
+#for current_dirpath, dirnames, filenames in os.walk("C:/dev/html/addClass"):
+#	print current_dirpath
+
+
+crawler.os_walk("C:/dev/", "html/jsonDropdowns")

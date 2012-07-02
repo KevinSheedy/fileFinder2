@@ -98,8 +98,18 @@ def get_tree_segment_paths(conn, repo_path, tree_segment_rel_path):
 def get_batch_of_paths(root_path, starting_path):
 	pass
 	
-def move_walk_generator(walk_generator, starting_path):
+def os_walk(root_path, start_point_rel_path):
+	
+	walker = os.walk(root_path)
+	
+	for current_dirpath, dirnames, filenames in walker:
+		current_rel_path = abs_path_to_rel_path(root_path, current_dirpath)
+		current_rel_path_array = path_to_folder_array(current_rel_path)
+		start_point_rel_path_array = path_to_folder_array(start_point_rel_path)
+		print current_dirpath
+		print current_rel_path_array
+		print start_point_rel_path_array
 	
 	
 
-main()
+os_walk("C:/dev", "html/jsonDropdowns")
