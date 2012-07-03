@@ -110,6 +110,89 @@ def os_walk(root_path, start_point_rel_path):
 		print current_rel_path_array
 		print start_point_rel_path_array
 	
+def dbg():
+	root_path = "C:/dev"
+	walker = os.walk(root_path)
+	i = 0
 	
+	for current_dirpath, dirnames, filenames in walker:
+		print current_dirpath
+		print dirnames
+		print filenames
+		i+=1
+		if i > 1:
+			print "return####################################################################"
+			return walker
+	
+#walker = dbg()
+#for current_dirpath, dirnames, filenames in walker:
+#	print current_dirpath
+#	print dirnames
+#	print filenames
 
-os_walk("C:/dev", "html/jsonDropdowns")
+#path = os.path.abspath("C://dev///html")
+#print path
+#os_walk("C:/dev", "html/jsonDropdowns")
+
+def get_os_walker(root_path, start_point_rel_path):
+	root_path         = os.path.abspath(root_path)
+	search_path       = os.path.join(root_path, start_point_rel_path)
+	search_path       = os.path.abspath(search_path)
+	search_path_array = get_path_array(search_path, root_path)
+	
+	print "search_path_array:", search_path_array
+	
+	walker = os.walk(root_path)
+	for current_dirpath, dirnames, filenames in walker:
+		
+		# Bottomed out
+		if len(dirnames) == 0:
+			return walker
+		
+		current_path_array = get_path_array(current_dirpath, root_path)
+		print "current_path_array:", current_path_array
+		
+		depth = len(current_path_array)
+		print "depth:", depth
+		
+		if depth >= len(search_path_array):
+			return walker
+		
+		search_folder = search_path_array[depth]
+		print "search_folder:" + search_folder
+		i = 0
+	
+		for dirname in list(dirnames):
+			print "compare", search_folder, dirname
+			#Found the folder
+			if dirname.lower() == search_folder:
+				print "found folder"
+				if depth == (len(search_path_array) - 1):
+					print "return walker"
+					return walker
+				break
+			if dirname.lower() > search_folder:
+				print "passed folder", dirname, search_folder
+				return walker
+			dirnames.remove(dirname)
+				
+def get_path_array(path, base_path):
+	path      = os.path.abspath(path).lower()
+	base_path = os.path.abspath(base_path).lower()
+	rel_path  = path[len(base_path) + 1:]
+	
+	if rel_path == "":
+		return []
+	
+	path_array = rel_path.split("\\")
+	
+	return path_array
+				
+walker = get_os_walker("C:/dev", "html/jsonDropdown")
+
+print "got walker"
+for current_dirpath, dirnames, filenames in walker:
+	print current_dirpath, dirnames
+
+
+#print get_path_array("C:////dev/\\aardvark/apple/", "C:\dev")

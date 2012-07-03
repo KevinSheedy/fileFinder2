@@ -43,4 +43,9 @@ list.append(("asdf_qer_asdfasdfasdf", 45678, True))
 #	print current_dirpath
 
 
-crawler.os_walk("C:/dev/", "html/jsonDropdowns")
+#crawler.os_walk("C:/dev/", "html/jsonDropdowns")
+
+alpha = ["a", "b", "c", "d", "e", "f", "g"]
+for letter in alpha:
+	print letter
+	alpha.remove(letter)
