@@ -2,16 +2,19 @@ import os
 import data_layer
 import sqlite3
 
-def main():
+def index_one_batch():
 
 	conn = data_layer.get_connection('test.db')
 	root_dir = 'C:/dev/Markup/Markup_Demo/'
 	set_filenames = set()
 	
 	#list_path_arrays = get_tree_segment_paths(conn, root_dir, "MarkupEJB/ejbModule/aib/")
-	list_path_arrays = get_tree_segment_paths(conn, "C:/", "")
+	list_paths = get_batch_of_paths(root_dir, "")
+	list_path_arrays = []
 	
-	for path_array in list_path_arrays:
+	for path in list_paths:
+		path_array = path_to_folder_array(path)
+		list_path_arrays.append(path_array)
 		for filename in path_array:
 			set_filenames.add(filename)
 	
@@ -68,79 +71,39 @@ def abs_path_to_rel_path(root_dir, abs_path):
 	return rel_path
 
 def path_to_folder_array(path):
-	return path.rsplit("/")
+	return path.rsplit("\\")
 
-def get_tree_segment_paths(conn, repo_path, tree_segment_rel_path):
-	
-	tree_segment_rel_path_array = path_to_folder_array(tree_segment_rel_path)
-	tree_segment_depth = len(tree_segment_rel_path_array)
-	tree_segment_root_path = repo_path + tree_segment_rel_path
-	list_path_arrays = []
-	
-	print tree_segment_root_path
-	
-	for current_dirpath, dirnames, filenames in os.walk(tree_segment_root_path):
-	
-		print current_dirpath
-		
-		current_file_rel_path       = abs_path_to_rel_path(repo_path, current_dirpath)
-		current_file_rel_path_array = path_to_folder_array(current_file_rel_path)
-		list_path_arrays.append(current_file_rel_path_array)
-		depth_within_tree_segment = len(current_file_rel_path_array) - tree_segment_depth
-		
-		# Don't go any more than 3 folders deep
-		if depth_within_tree_segment >= 3:
-			# This stops the walk from going deeper
-			del dirnames[:]
-	
-	return list_path_arrays
 	
 def get_batch_of_paths(root_path, starting_path):
-	pass
-	
-def os_walk(root_path, start_point_rel_path):
-	
-	walker = os.walk(root_path)
-	
-	for current_dirpath, dirnames, filenames in walker:
-		current_rel_path = abs_path_to_rel_path(root_path, current_dirpath)
-		current_rel_path_array = path_to_folder_array(current_rel_path)
-		start_point_rel_path_array = path_to_folder_array(start_point_rel_path)
-		print current_dirpath
-		print current_rel_path_array
-		print start_point_rel_path_array
-	
-def dbg():
-	root_path = "C:/dev"
-	walker = os.walk(root_path)
+	root_path = os.path.abspath(root_path)
+	walker = get_os_walker(root_path, starting_path)
+	batch_size = 1000
 	i = 0
-	
+	batch = []
 	for current_dirpath, dirnames, filenames in walker:
-		print current_dirpath
-		print dirnames
-		print filenames
-		i+=1
-		if i > 1:
-			print "return####################################################################"
-			return walker
-	
-#walker = dbg()
-#for current_dirpath, dirnames, filenames in walker:
-#	print current_dirpath
-#	print dirnames
-#	print filenames
+		
+		#for dir in dirnames:
+		#	path = os.path.join(current_dirpath, dir)
+		#	path = os.path.abspath(path)
+		#	batch.append(path)
+			
+		for file in filenames:
+			path = os.path.join(current_dirpath, file)
+			path = os.path.abspath(path)
+			rel_path = path[len(root_path) + 1:]
+			batch.append(rel_path)
+			i+=1
+			if i >= batch_size:
+				return batch
+		
+	return batch
 
-#path = os.path.abspath("C://dev///html")
-#print path
-#os_walk("C:/dev", "html/jsonDropdowns")
 
 def get_os_walker(root_path, start_point_rel_path):
 	root_path         = os.path.abspath(root_path)
 	search_path       = os.path.join(root_path, start_point_rel_path)
 	search_path       = os.path.abspath(search_path)
 	search_path_array = get_path_array(search_path, root_path)
-	
-	print "search_path_array:", search_path_array
 	
 	walker = os.walk(root_path)
 	for current_dirpath, dirnames, filenames in walker:
@@ -150,30 +113,26 @@ def get_os_walker(root_path, start_point_rel_path):
 			return walker
 		
 		current_path_array = get_path_array(current_dirpath, root_path)
-		print "current_path_array:", current_path_array
-		
-		depth = len(current_path_array)
-		print "depth:", depth
+		depth              = len(current_path_array)
 		
 		if depth >= len(search_path_array):
 			return walker
 		
 		search_folder = search_path_array[depth]
-		print "search_folder:" + search_folder
-		i = 0
 	
 		for dirname in list(dirnames):
-			print "compare", search_folder, dirname
+		
 			#Found the folder
 			if dirname.lower() == search_folder:
-				print "found folder"
 				if depth == (len(search_path_array) - 1):
-					print "return walker"
 					return walker
 				break
+				
+			#Passed the folder
 			if dirname.lower() > search_folder:
-				print "passed folder", dirname, search_folder
 				return walker
+			
+			#Haven't reached the folder yet
 			dirnames.remove(dirname)
 				
 def get_path_array(path, base_path):
@@ -188,11 +147,4 @@ def get_path_array(path, base_path):
 	
 	return path_array
 				
-walker = get_os_walker("C:/dev", "html/jsonDropdown")
-
-print "got walker"
-for current_dirpath, dirnames, filenames in walker:
-	print current_dirpath, dirnames
-
-
-#print get_path_array("C:////dev/\\aardvark/apple/", "C:\dev")
+index_one_batch()
